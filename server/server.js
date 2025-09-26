@@ -1,4 +1,3 @@
-// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -11,8 +10,8 @@ const OPENWEATHER_API_KEY = process.env.WEATHER_KEY;
 
 // ✅ Explicit CORS setup
 const allowedOrigins = [
-  "https://weather-chat-app-4ey4.vercel.app", // ✅ Your frontend Vercel domain
-  "http://localhost:5173",                   // ✅ Allow local dev (optional)
+  "https://weather-chat-app-4ey4.vercel.app",
+  "http://localhost:5173",
 ];
 
 app.use(
@@ -30,8 +29,8 @@ app.use(
   })
 );
 
-// ✅ Explicitly handle preflight requests
-app.options("*", cors());
+// ✅ Correct Express 5 preflight handling
+app.options(/.*/, cors());
 
 app.use(express.json());
 
