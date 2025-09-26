@@ -8,46 +8,34 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const OPENWEATHER_API_KEY = process.env.WEATHER_KEY;
 
-// ✅ Explicit CORS setup
-const allowedOrigins = [
-  "https://weather-chat-app-4ey4.vercel.app",
-  "http://localhost:5173",
-];
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.log("❌ Blocked by CORS:", origin);
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "OPTIONS"],
+    origin: ["https://weather-chat-app-4ey4.vercel.app", "*"], // allow frontend
+    methods: ["GET", "POST"],
     allowedHeaders: ["Content-Type"],
   })
 );
-
-// ✅ Correct Express 5 preflight handling
-app.options(/.*/, cors());
-
 app.use(express.json());
 
 // ---------------- Weather route ----------------
 app.post("/api/weather", async (req, res) => {
   const { messages, threadId } = req.body;
-
   if (!messages || messages.length === 0) {
     return res.status(400).json({ message: "No messages provided." });
   }
 
-  const rawInput = messages[0].content;
+  let rawInput = messages[0].content;
   if (!rawInput) {
     return res.status(400).json({ message: "Message content is empty." });
   }
 
-  const cityName = rawInput.trim();
+  // Extract city name more intelligently
+  let cityName = rawInput.trim();
+  if (/weather|forecast|temperature|climate/i.test(cityName)) {
+    const words = cityName.split(" ");
+    cityName = words[words.length - 1]; // pick last word
+  }
+
   console.log(`📍 Thread: ${threadId} | Input: "${rawInput}" | City: "${cityName}"`);
 
   try {
@@ -66,7 +54,7 @@ app.post("/api/weather", async (req, res) => {
 
     res.json({
       success: true,
-      message: `🌤️ ${data.weather[0].description} in ${data.name}, ${data.sys.country}`,
+      message: `🌤️ ${data.weather[0].description} in ${data.name}, ${data.sys.country}, Temperature: ${data.main.temp}°C`,
       threadId,
       resourceId: "weatherAgent",
     });
@@ -81,8 +69,4 @@ app.get("/", (req, res) =>
   res.json({ status: "✅ Weather ChatBot Server Running" })
 );
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`🔑 OpenWeather API Key: ${OPENWEATHER_API_KEY ? "✅ Found" : "❌ Missing"}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
