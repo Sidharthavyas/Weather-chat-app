@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-export const useChat = (apiBase) => {
+export const useChat = (API_BASE) => {
   const [messages, setMessages] = useState([
     { role: "agent", content: "Weather Chat Agent 🌙", timestamp: Date.now() },
   ]);
@@ -11,7 +11,9 @@ export const useChat = (apiBase) => {
 
   // ✅ Clear chat
   const clearChat = () => {
-    setMessages([{ role: "agent", content: "Weather Chat Agent 🌙", timestamp: Date.now() }]);
+    setMessages([
+      { role: "agent", content: "Weather Chat Agent 🌙", timestamp: Date.now() },
+    ]);
   };
 
   // ✅ Auto-scroll to bottom
@@ -21,7 +23,7 @@ export const useChat = (apiBase) => {
     }
   }, [messages, isTyping]);
 
-  // ✅ Send message with streaming support
+  // ✅ Send message to backend (weather only)
   const sendMessage = async (content) => {
     if (!content.trim() || isTyping) return;
 
@@ -30,11 +32,13 @@ export const useChat = (apiBase) => {
     setIsTyping(true);
 
     try {
-      // POST to backend
-      const res = await fetch(`${apiBase}/chat`, {
+      const res = await fetch(`${API_BASE}/api/weather`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: content }),
+        body: JSON.stringify({
+          messages: [userMessage],
+          threadId: Date.now().toString(),
+        }),
       });
 
       if (!res.ok) {
@@ -50,28 +54,16 @@ export const useChat = (apiBase) => {
         return;
       }
 
-      // Prepare assistant message container
-      let fullMessage = "";
-      const agentMessage = { role: "agent", content: "", timestamp: Date.now() };
-      setMessages((prev) => [...prev, agentMessage]);
+      const data = await res.json();
 
-      // ✅ Stream response in real time
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        fullMessage += decoder.decode(value, { stream: true });
-
-        // Update the last message incrementally
-        setMessages((prev) => {
-          const updated = [...prev];
-          updated[updated.length - 1] = { ...agentMessage, content: fullMessage };
-          return updated;
-        });
-      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "agent",
+          content: data.message || "⚠️ No response received.",
+          timestamp: Date.now(),
+        },
+      ]);
 
       setConnectionError(false);
     } catch (err) {
@@ -97,7 +89,9 @@ export const useChat = (apiBase) => {
 
   // ✅ Export chat as JSON
   const exportChat = () => {
-    const blob = new Blob([JSON.stringify(messages, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(messages, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
