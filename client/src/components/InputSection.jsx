@@ -1,10 +1,17 @@
-import React from "react";
+
 
 const InputSection = ({ input, setInput, sendMessage, isTyping }) => {
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const handleSendMessage = () => {
+    if (input.trim()) {
       sendMessage(input);
+      setInput(""); // Clear the input after sending
     }
   };
 
@@ -21,7 +28,7 @@ const InputSection = ({ input, setInput, sendMessage, isTyping }) => {
         />
         <button
           className="send-button"
-          onClick={() => sendMessage(input)}
+          onClick={handleSendMessage}
           disabled={!input.trim() || isTyping}
         >
           ➤
