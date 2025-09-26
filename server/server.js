@@ -9,25 +9,29 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const OPENWEATHER_API_KEY = process.env.WEATHER_KEY;
 
-// ✅ Allow only your Vercel frontend to access the API
+// ✅ Explicit CORS setup
 const allowedOrigins = [
-  "https://weather-chat-app-4ey4-bk4aoghd4-vyassidhartha5-9029s-projects.vercel.app", // Replace with your actual Vercel domain
+  "https://weather-chat-app-4ey4.vercel.app", // ✅ Your frontend Vercel domain
+  "http://localhost:5173",                   // ✅ Allow local dev (optional)
 ];
 
 app.use(
   cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin (e.g., Postman, local dev)
+    origin: (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        callback(new Error("CORS blocked: Not allowed by server."));
+        console.log("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
       }
     },
     methods: ["GET", "POST", "OPTIONS"],
     allowedHeaders: ["Content-Type"],
   })
 );
+
+// ✅ Explicitly handle preflight requests
+app.options("*", cors());
 
 app.use(express.json());
 
