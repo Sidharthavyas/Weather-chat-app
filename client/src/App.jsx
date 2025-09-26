@@ -5,12 +5,12 @@ import ChatWindow from "./components/ChatWindow";
 import InputSection from "./components/InputSection";
 import { useChat } from "./hooks/useChat";
 
-const COLLEGE_ROLL_NUMBER = "22-E&CS61-26";
-const API_BASE =""
+const API_BASE = import.meta.env.VITE_API_URL;
 
 function App() {
   const [darkMode, setDarkMode] = useState(false);
   const [input, setInput] = useState("");
+  const API_BASE = import.meta.env.VITE_API_URL;
 
   const {
     messages,
@@ -23,7 +23,7 @@ function App() {
     setSearchTerm,
     exportChat,
     clearChat
-  } = useChat(API_BASE, COLLEGE_ROLL_NUMBER);
+  } = useChat(API_BASE);
 
   return (
     <div className={`app ${darkMode ? "dark" : "light"}`}>
