@@ -1,3 +1,4 @@
+// server.js
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -8,13 +9,32 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const OPENWEATHER_API_KEY = process.env.WEATHER_KEY;
 
-// Middleware
-app.use(cors());
+// ✅ Allow only your Vercel frontend to access the API
+const allowedOrigins = [
+  "https://weather-chat-app-4ey4-bk4aoghd4-vyassidhartha5-9029s-projects.vercel.app", // Replace with your actual Vercel domain
+];
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (e.g., Postman, local dev)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS blocked: Not allowed by server."));
+      }
+    },
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+  })
+);
+
 app.use(express.json());
 
 // ---------------- Weather route ----------------
 app.post("/api/weather", async (req, res) => {
   const { messages, threadId } = req.body;
+
   if (!messages || messages.length === 0) {
     return res.status(400).json({ message: "No messages provided." });
   }
@@ -61,4 +81,5 @@ app.get("/", (req, res) =>
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔑 OpenWeather API Key: ${OPENWEATHER_API_KEY ? "✅ Found" : "❌ Missing"}`);
 });
